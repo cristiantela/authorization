@@ -21,6 +21,7 @@
 
 ##### `$authorization->login($username, $password)`  
 Verify if there is a user that match `$username` and `$password`. If yes, create a `user_session` with a random `token` string.
+
 | Returns |
 | ------ |
 | true |
@@ -28,6 +29,7 @@ Verify if there is a user that match `$username` and `$password`. If yes, create
 
 ##### `$authorization->verifyToken($token)`  
 Verify if `$token` exists if it is active.
+
 | Returns |
 | ------ |
 | true |
@@ -36,6 +38,7 @@ Verify if `$token` exists if it is active.
 
 ##### `$authorization->logout()`  
 Turn the `$token` disactived. (You should call `verifyToken` or `login` methods before calling this method, to know the reference `id` of `user_session`)
+
 | Returns |
 | ------ |
 | true |
