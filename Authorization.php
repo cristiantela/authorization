@@ -9,36 +9,35 @@ class Authorization {
         $this->link = $link;
     }
 
+    function getUser(){
+        return $this->user;
+    }
+    function setUser($user){
+        $this->user = $user;
+    }
+
+    function getUserSession(){
+        return $this->user_session;
+    }
+    function setUserSession($session){
+        $this->user_session = $session;
+    }
+
     function login ($username, $password) {
-        $prepare = $this->link->prepare('
-            SELECT id
-            FROM user
-            WHERE
-                username = :username
-                AND password = :password
-        ');
-
-        $result = $prepare->execute([
-            'username' => $username,
-            'password' => $password,
-        ]);
-
-        if ($prepare->rowCount() === 0) {
+        $queryUserExist = $this->userExists($username, $password);
+        if ($queryUserExist->rowCount() === 0) {
             return [ 'error' => 'User not found', ];
         }
+        $token = $this->generateToken();
 
-        $user = $prepare->fetch();
-        $token = '';
+        $this->setUser($queryUserExist->fetch());
+        $this->setUserSession(null);
+        $this->registerToken($this->getUser(), $token);
+        
+        return true;
+    }
 
-        $this->user = $user;
-        $this->user_session = null;
-
-        $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890abcdefghijklmnopqrtuvwxyz';
-
-        for ($i = 0; $i < 20; $i++) {
-            $token .= $characters[rand(0, strlen($characters) - 1)];
-        }
-
+    function registerToken($user, $token){
         $prepare = $this->link->prepare('
             INSERT INTO user_session
                 (user, token, active)
@@ -56,8 +55,31 @@ class Authorization {
             'token' => $token,
             'active' => true,
         ];
+    }
 
-        return true;
+    function userExists($username, $password){
+        $prepare = $this->link->prepare('
+            SELECT id
+            FROM user
+            WHERE
+                username = :username
+                AND password = :password
+        ');
+
+        $prepare->execute([
+            'username' => $username,
+            'password' => $password,
+        ]);
+        return $prepare;
+    }
+
+    function generateToken(){
+        $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890abcdefghijklmnopqrtuvwxyz';
+        $token = '';
+        for ($i = 0; $i < 20; $i++) {
+            $token .= $characters[rand(0, strlen($characters) - 1)];
+        }
+        return $token;
     }
 
     function verifyToken ($token) {
@@ -94,6 +116,16 @@ class Authorization {
         return true;
     }
 
+    function disableToken($token){
+        $prepare = $this->link->prepare('
+            UPDATE user_session
+            SET active = 0
+            WHERE token = :token');
+        $result = $prepare->execute([
+            'token'=>$token,
+        ]);
+    }
+
     function logout () {
         if ($this->user_session === null) {
             return [ 'error' => 'You should call verifyToken or login first' ];
@@ -102,7 +134,7 @@ class Authorization {
         $prepare = $this->link->prepare('
             UPDATE user_session
             SET active = 0
-            WHERE id = :user_session
+            WHERE token = :user_session
         ');
 
         $result = $prepare->execute([
