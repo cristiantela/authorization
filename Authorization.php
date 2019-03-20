@@ -120,25 +120,11 @@ class Authorization {
         $prepare = $this->link->prepare('
             UPDATE user_session
             SET active = 0
-            WHERE token = :token');
-        $result = $prepare->execute([
-            'token'=>$token,
-        ]);
-    }
-
-    function logout () {
-        if ($this->user_session === null) {
-            return [ 'error' => 'You should call verifyToken or login first' ];
-        }
-
-        $prepare = $this->link->prepare('
-            UPDATE user_session
-            SET active = 0
-            WHERE token = :user_session
-        ');
+            WHERE token = :token'
+        );
 
         $result = $prepare->execute([
-            'user_session' => $this->user_session['id'],
+            'token' => $token,
         ]);
 
         $this->user = null;

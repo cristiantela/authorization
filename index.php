@@ -45,14 +45,14 @@
 	</div>
 
 	<!-- Login Form -->
-	<div id="formulario" style="display: none;" class=" mx-auto formulario">
+	<form id="formulario" style="display: none;" class=" mx-auto formulario">
 		<h1 class="h3 mb-3 font-weight-normal">Login</h1>
 		<label for="iUser" class="sr-only">Your Username</label>
 		<input type="text" name="user" id="iUser" class="form-control" placeholder="User" required autofocus>
 		<label for="iPassword" class="sr-only">Password</label>
 		<input class="form-control" type="password" name="password" id="iPassword" placeholder="Password" required>
 		<button id="loginButton" class="btn btn-primary btn-block mt-4" type="submit">Login</button>
-	</div>
+	</form>
 
 	<!-- Code Area -->
 
@@ -74,14 +74,25 @@
 		  }
 		  return "";
 		}
-		function loadUser(){
-			$('#username').text(getCookie('user').charAt(0).toUpperCase()+getCookie('user').slice(1));
+		function PageLogin () {
+			$('#usercard').fadeOut();
+			$('#formulario').fadeIn();
+		}
+		function PageHome () {
+			loadUser(getCookie("user"))
+			$('#formulario').fadeOut();
+			$('#usercard').fadeIn();
+		}
+		function loadUser(user){
+			$('#username').text(user.charAt(0).toUpperCase()+user.slice(1));
 		}
 		function toggleForm(){
 			$('#formulario').fadeOut();
 		}
 		function checkUser(){
-			if(getCookie("_session") == ""){
+			let token = getCookie("_session")
+
+			if(token == ""){
 				$('#formulario').fadeIn();
 			}else{
 				$.ajax({
@@ -92,20 +103,18 @@
 					},
 					success: function(response){
 						if(response=="1"){
-							$('#formulario').fadeOut();
-							$('#usercard').fadeIn();
+							PageHome()
 						}else{
-							$('#usercard').fadeOut();
-							$('#formulario').fadeIn();
+							PageLogin()
 						}
 					}
 				})
 			}
 		}
 		$(document).ready(function(){
-			loadUser();
 			checkUser();
-			$('#loginButton').click(function(){
+			$('#formulario').submit(function(event){
+				event.preventDefault()
 				$.ajax({
 					url: 'login.php',
 					type: 'POST',
@@ -114,8 +123,14 @@
 						user: $('#iUser').val(),
 						password: $('#iPassword').val()
 					},
-					success:function(){
-						checkUser();
+					success:function(response){
+						response = JSON.parse(response)
+
+						if (response.error) {
+							alert(response.error)
+							return false
+						}
+						PageHome()
 					}
 				});
 			});
@@ -127,7 +142,7 @@
 						action: "logout"
 					},
 					success:function(response){
-						checkUser();
+						PageLogin()
 					}
 				});
 			});
