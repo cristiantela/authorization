@@ -11,8 +11,8 @@
 
 		$try = $auth->login($user,$pass);
 		if($try === true){
-			setcookie("_session", $auth->getUserSession()['token'], time()+99*55);
-			setcookie("user", $user, time()+99*55);
+			setcookie("_session", $auth->getUserSession()['token'], time()+99*55, "/");
+			setcookie("user", $user, time()+99*55, "/");
 
 			echo json_encode([ 'token' => $auth->getUserSession()['token'], 'user' => $user, ]);
 		} else {
